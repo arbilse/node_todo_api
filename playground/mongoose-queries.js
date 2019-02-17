@@ -31,7 +31,7 @@ const {User} = require('./../server/models/user');
 
 
 // challenge - find USER
-var id = '5c675be48388e331643fde28';
+var id = '5c675be48388e331643fde2 ';
 
 User.findById(id).then((user) => {
   if (!user) {
