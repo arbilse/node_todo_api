@@ -15,7 +15,6 @@ const port = process.env.PORT;
 
 app.use(bodyParser.json());
 
-
 // TODOS - POST
 app.post('/todos', (req, res) => {
   var todo = new Todo({
