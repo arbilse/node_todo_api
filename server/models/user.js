@@ -13,7 +13,7 @@ var UserSchema = new mongoose.Schema({
     unique: true,
     validate: {
       validator: validator.isEmail,
-      message:'{VALUE} is not a valid email'
+      message: '{VALUE} is not a valid email'
     }
   },
   password: {
@@ -40,7 +40,6 @@ UserSchema.methods.toJSON = function () {
   return _.pick(userObject, ['_id', 'email']);
 };
 
-
 UserSchema.methods.generateAuthToken = function () {
   var user = this;
   var access = 'auth';
@@ -54,6 +53,16 @@ UserSchema.methods.generateAuthToken = function () {
   });
 };
 
+UserSchema.methods.removeToken = function (token) {
+  var user = this;
+
+  return user.update({
+    $pull: {
+      tokens: {token}
+    }
+  });
+};
+
 UserSchema.statics.findByToken = function (token) {
   var User = this;
   var decoded;
@@ -61,9 +70,6 @@ UserSchema.statics.findByToken = function (token) {
   try {
     decoded = jwt.verify(token, 'abc123');
   } catch (e) {
-    // return new Promise((resolve, reject) => {
-    //   reject();
-    // });
     return Promise.reject();
   }
 
@@ -83,6 +89,7 @@ UserSchema.statics.findByCredentials = function (email, password) {
     }
 
     return new Promise((resolve, reject) => {
+      // Use bcrypt.compare to compare password and user.password
       bcrypt.compare(password, user.password, (err, res) => {
         if (res) {
           resolve(user);
@@ -94,23 +101,21 @@ UserSchema.statics.findByCredentials = function (email, password) {
   });
 };
 
-UserSchema.pre('save', function(next) {
-    var user = this;
+UserSchema.pre('save', function (next) {
+  var user = this;
 
-    if (user.isModified('password')) {
-      bcrypt.genSalt(10, (err, salt) => {
-        bcrypt.hash(user.password, salt, (err, hash) => {
-          user.password = hash;
-          next();
-        });
-      });
-    } else {
+  if (user.isModified('password')) {
+    bcrypt.genSalt(10, (err, salt) => {
+      bcrypt.hash(user.password, salt, (err, hash) => {
+        user.password = hash;
         next();
-    }
+      });
+    });
+  } else {
+    next();
+  }
 });
-
-
 
 var User = mongoose.model('User', UserSchema);
 
-module.exports = {User};
+module.exports = {User}

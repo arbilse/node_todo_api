@@ -13,8 +13,8 @@ var {authenticate} = require('./middleware/authenticate');
 var app = express();
 const port = process.env.PORT;
 
-
 app.use(bodyParser.json());
+
 
 // TODOS - POST
 app.post('/todos', (req, res) => {
@@ -51,6 +51,7 @@ app.get('/todos/:id', (req, res) => {
     if (!todo) {
       return res.status(404).send();
     }
+
     res.send({todo});
   }).catch((e) => {
     res.status(400).send();
@@ -65,10 +66,11 @@ app.delete('/todos/:id', (req, res) => {
     return res.status(404).send();
   }
 
-  Todo.findByIdAndDelete(id).then((todo) => {
-    if(!todo){
+  Todo.findByIdAndRemove(id).then((todo) => {
+    if (!todo) {
       return res.status(404).send();
     }
+
     res.send({todo});
   }).catch((e) => {
     res.status(400).send();
@@ -92,10 +94,7 @@ app.patch('/todos/:id', (req, res) => {
     body.completedAt = null;
   }
 
-  Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => { //deprecated
-  // Todo.findOneAndUpdate({_id:id}, {$set: body}, {new: true}).then((todo) => { //deprecated
-  // issue raised: https://github.com/Automattic/mongoose/issues/6880
-
+  Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
     if (!todo) {
       return res.status(404).send();
     }
@@ -103,8 +102,9 @@ app.patch('/todos/:id', (req, res) => {
     res.send({todo});
   }).catch((e) => {
     res.status(400).send();
-  });
+  })
 });
+
 
 
 // POST /users
@@ -113,7 +113,7 @@ app.post('/users', (req, res) => {
   var user = new User(body);
 
   user.save().then(() => {
-      return user.generateAuthToken();
+    return user.generateAuthToken();
   }).then((token) => {
     res.header('x-auth', token).send(user);
   }).catch((e) => {
@@ -137,6 +137,15 @@ app.post('/users/login', (req, res) => {
       res.header('x-auth', token).send(user);
     });
   }).catch((e) => {
+    res.status(400).send();
+  });
+});
+
+// DELETE /users/me/token
+app.delete('/users/me/token', authenticate, (req, res) => {
+  req.user.removeToken(req.token).then(() => {
+    res.status(200).send();
+  }, () => {
     res.status(400).send();
   });
 });
